@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyTools – Free Online Tools for PDF, Images, Developers & Students</title>
+  <meta name="description" content="MyTools offers 20+ free online tools: PDF converter, image compressor, JSON formatter, password generator, study timer and more. No signup required.">
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="canonical" href="https://Subbu99537.github.io/mytools/">
+</head>
+<body>
+
+  <div id="navbar-placeholder"></div>
+
+  <!-- HERO with Particle Canvas -->
+  <section class="hero" style="padding-bottom:80px;min-height:420px">
+    <canvas id="particle-canvas"></canvas>
+    <div class="hero-badge">✨ <span>20+ free tools</span> — no signup, no server upload</div>
+    <h1>Every tool you need,<br><em>always free</em></h1>
+    <p>PDF converters, image editors, developer utilities, and student tools — all in one place. Try voice commands!</p>
+    <div class="hero-search" style="position:relative">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-3);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder='Search tools… or say "open JSON formatter"' id="hero-search" autocomplete="off">
+      <button class="btn-primary" onclick="handleSearch(document.getElementById('hero-search').value)">Search</button>
+      <div id="search-results"></div>
+    </div>
+    <p style="margin-top:14px;font-size:0.8rem;color:var(--text-3)">
+      🎤 Try saying: <em style="color:var(--accent-3)">"open password generator"</em> · <em style="color:var(--accent-3)">"go to PDF tools"</em> · <em style="color:var(--accent-3)">"dark mode"</em>
+    </p>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-value">20+</div><div class="stat-label">Free Tools</div></div>
+    <div class="stat"><div class="stat-value">100%</div><div class="stat-label">Browser-Based</div></div>
+    <div class="stat"><div class="stat-value">0</div><div class="stat-label">Signups Needed</div></div>
+    <div class="stat"><div class="stat-value">4</div><div class="stat-label">Categories</div></div>
+  </div>
+
+  <div class="container">
+    <div class="ad-slot ad-slot-banner" style="margin-top:40px"><!-- Ad Unit --></div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Browse by Category</h2>
+      </div>
+      <div class="categories-grid">
+        <a href="tools/pdf/" class="category-card animate-in" style="--card-color:#ff5f7e">
+          <div class="category-icon" style="background:rgba(255,95,126,0.15);color:#ff5f7e;font-size:1.4rem">📄</div>
+          <div class="category-name">PDF Tools</div>
+          <div class="category-desc">Convert, merge, split, compress and manipulate PDF files with ease.</div>
+          <div class="category-count">5 tools available →</div>
+        </a>
+        <a href="tools/image/" class="category-card animate-in" style="--card-color:#22d3a5">
+          <div class="category-icon" style="background:rgba(34,211,165,0.15);color:#22d3a5;font-size:1.4rem">🖼️</div>
+          <div class="category-name">Image Tools</div>
+          <div class="category-desc">Compress, resize, convert formats, remove backgrounds and more.</div>
+          <div class="category-count">5 tools available →</div>
+        </a>
+        <a href="tools/developer/" class="category-card animate-in" style="--card-color:#6c63ff">
+          <div class="category-icon" style="background:rgba(108,99,255,0.15);color:#6c63ff;font-size:1.4rem">💻</div>
+          <div class="category-name">Developer Tools</div>
+          <div class="category-desc">JSON formatter, Base64, UUID generator, timestamp converter and more.</div>
+          <div class="category-count">5 tools available →</div>
+        </a>
+        <a href="tools/student/" class="category-card animate-in" style="--card-color:#ffd166">
+          <div class="category-icon" style="background:rgba(255,209,102,0.15);color:#ffd166;font-size:1.4rem">🎓</div>
+          <div class="category-name">Student Tools</div>
+          <div class="category-desc">Word counter, summarizer, study timer, flashcards and GPA calculator.</div>
+          <div class="category-count">5 tools available →</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- POPULAR TOOLS -->
+  <section class="section" style="padding-top:0">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">🔥 Popular Tools</h2>
+      </div>
+      <div class="tools-grid">
+        <a href="tools/pdf/image-to-pdf.html" class="tool-card"><div class="tool-icon">🖼️</div><div class="tool-name">Image to PDF</div><div class="tool-desc">Convert images into a single PDF document.</div></a>
+        <a href="tools/image/image-compressor.html" class="tool-card"><div class="tool-icon">🗜️</div><div class="tool-name">Image Compressor</div><div class="tool-desc">Reduce image file size without losing quality.</div></a>
+        <a href="tools/developer/json-formatter.html" class="tool-card"><div class="tool-icon" style="font-family:var(--font-mono);font-size:0.7rem;font-weight:700">{ }</div><div class="tool-name">JSON Formatter</div><div class="tool-desc">Format and beautify JSON in one click.</div></a>
+        <a href="tools/developer/password-generator.html" class="tool-card"><div class="tool-icon">🔑</div><div class="tool-name">Password Generator</div><div class="tool-desc">Generate strong random passwords instantly.</div></a>
+        <a href="tools/student/word-counter.html" class="tool-card"><div class="tool-icon">📝</div><div class="tool-name">Word Counter</div><div class="tool-desc">Count words, characters and reading time.</div></a>
+        <a href="tools/student/study-timer.html" class="tool-card"><div class="tool-icon">⏰</div><div class="tool-name">Study Timer</div><div class="tool-desc">Pomodoro-style timer to boost focus.</div></a>
+        <a href="tools/pdf/merge-pdf.html" class="tool-card"><div class="tool-icon">🔗</div><div class="tool-name">Merge PDF</div><div class="tool-desc">Combine multiple PDFs into one file.</div></a>
+        <a href="tools/developer/uuid-generator.html" class="tool-card"><div class="tool-icon">🎲</div><div class="tool-name">UUID Generator</div><div class="tool-desc">Generate random UUIDs for your projects.</div></a>
+        <a href="tools/image/image-resizer.html" class="tool-card"><div class="tool-icon">📐</div><div class="tool-name">Image Resizer</div><div class="tool-desc">Resize images to exact dimensions.</div></a>
+        <a href="tools/student/gpa-calculator.html" class="tool-card"><div class="tool-icon">🎓</div><div class="tool-name">GPA Calculator</div><div class="tool-desc">Calculate your Grade Point Average.</div></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY SECTION -->
+  <section class="section" style="background:var(--bg-2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+    <div class="container">
+      <div style="text-align:center;margin-bottom:40px">
+        <h2 class="section-title" style="font-size:1.8rem">Why use MyTools?</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px">
+        <div style="text-align:center;padding:24px">
+          <div style="font-size:2rem;margin-bottom:12px">🔒</div>
+          <h3 style="font-family:var(--font-display);font-weight:700;margin-bottom:8px">Private by Default</h3>
+          <p style="font-size:0.875rem;color:var(--text-2)">Files never leave your device. 100% browser-based.</p>
+        </div>
+        <div style="text-align:center;padding:24px">
+          <div style="font-size:2rem;margin-bottom:12px">⚡</div>
+          <h3 style="font-family:var(--font-display);font-weight:700;margin-bottom:8px">Lightning Fast</h3>
+          <p style="font-size:0.875rem;color:var(--text-2)">No server round-trips. Instant processing.</p>
+        </div>
+        <div style="text-align:center;padding:24px">
+          <div style="font-size:2rem;margin-bottom:12px">🎤</div>
+          <h3 style="font-family:var(--font-display);font-weight:700;margin-bottom:8px">Voice Powered</h3>
+          <p style="font-size:0.875rem;color:var(--text-2)">Navigate to any tool just by saying its name.</p>
+        </div>
+        <div style="text-align:center;padding:24px">
+          <div style="font-size:2rem;margin-bottom:12px">🆓</div>
+          <h3 style="font-family:var(--font-display);font-weight:700;margin-bottom:8px">Always Free</h3>
+          <p style="font-size:0.875rem;color:var(--text-2)">No paywalls, no premium tiers, no hidden fees.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="ad-slot ad-slot-banner"><!-- Ad Unit --></div>
+  </div>
+
+  <div id="footer-placeholder"></div>
+
+  <!-- VOICE COMMAND UI -->
+  <div class="voice-btn-wrap">
+    <div id="voice-panel">
+      <div class="voice-panel-header">
+        <span>🎤 Listening…</span>
+        <div class="voice-mic-wave">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <div id="voice-transcript"></div>
+      <div id="voice-status">Say a command…</div>
+      <button class="voice-help-btn" onclick="showVoiceHelp()">📋 See all voice commands</button>
+    </div>
+    <button id="voice-btn" onclick="toggleVoice()" title="Voice commands">🎤</button>
+  </div>
+
+  <!-- Voice Help Modal -->
+  <div id="voice-help-modal" onclick="if(event.target===this)this.classList.remove('visible')">
+    <div class="voice-help-inner">
+      <h2>🎤 Voice Commands</h2>
+      <p style="font-size:0.85rem;color:var(--text-2);margin-bottom:20px">Click the mic button then say any command:</p>
+      <div class="voice-cmd-group">
+        <h4>Navigation</h4>
+        <div class="voice-cmd-list">
+          <span class="voice-cmd-tag">go home</span><span class="voice-cmd-tag">pdf tools</span><span class="voice-cmd-tag">image tools</span><span class="voice-cmd-tag">developer tools</span><span class="voice-cmd-tag">student tools</span><span class="voice-cmd-tag">go back</span><span class="voice-cmd-tag">scroll down</span><span class="voice-cmd-tag">scroll up</span>
+        </div>
+      </div>
+      <div class="voice-cmd-group">
+        <h4>PDF Tools</h4>
+        <div class="voice-cmd-list">
+          <span class="voice-cmd-tag">image to pdf</span><span class="voice-cmd-tag">merge pdf</span><span class="voice-cmd-tag">split pdf</span><span class="voice-cmd-tag">compress pdf</span><span class="voice-cmd-tag">pdf to image</span>
+        </div>
+      </div>
+      <div class="voice-cmd-group">
+        <h4>Image Tools</h4>
+        <div class="voice-cmd-list">
+          <span class="voice-cmd-tag">compress image</span><span class="voice-cmd-tag">resize image</span><span class="voice-cmd-tag">convert image</span><span class="voice-cmd-tag">image to base64</span><span class="voice-cmd-tag">remove background</span>
+        </div>
+      </div>
+      <div class="voice-cmd-group">
+        <h4>Developer Tools</h4>
+        <div class="voice-cmd-list">
+          <span class="voice-cmd-tag">json formatter</span><span class="voice-cmd-tag">base64 encoder</span><span class="voice-cmd-tag">uuid generator</span><span class="voice-cmd-tag">timestamp converter</span><span class="voice-cmd-tag">password generator</span>
+        </div>
+      </div>
+      <div class="voice-cmd-group">
+        <h4>Student Tools</h4>
+        <div class="voice-cmd-list">
+          <span class="voice-cmd-tag">word counter</span><span class="voice-cmd-tag">text summarizer</span><span class="voice-cmd-tag">study timer</span><span class="voice-cmd-tag">flashcard</span><span class="voice-cmd-tag">gpa calculator</span>
+        </div>
+      </div>
+      <div class="voice-cmd-group">
+        <h4>UI Commands</h4>
+        <div class="voice-cmd-list">
+          <span class="voice-cmd-tag">dark mode</span><span class="voice-cmd-tag">light mode</span><span class="voice-cmd-tag">open search</span><span class="voice-cmd-tag">stop listening</span>
+        </div>
+      </div>
+      <button class="btn-primary" style="margin-top:16px;width:100%;justify-content:center" onclick="document.getElementById('voice-help-modal').classList.remove('visible')">Close</button>
+    </div>
+  </div>
+
+  <script src="scripts/components.js"></script>
+  <script src="scripts/main.js"></script>
+  <script src="scripts/effects.js"></script>
+  <script>
+    document.getElementById('hero-search').addEventListener('input', e => handleSearch(e.target.value));
+    trackEvent('page', 'view', 'homepage');
+  </script>
+</body>
+</html>

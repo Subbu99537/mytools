@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base64 Encoder / Decoder – MyTools</title>
+  <meta name="description" content="Encode and decode Base64 strings online for free.">
+  <link rel="stylesheet" href="../../styles/main.css">
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+  <div class="tool-page">
+    <div class="breadcrumb"><a href="../../index.html">Home</a> › <a href="index.html">Developer Tools</a> › <span>Base64 Encoder</span></div>
+    <div class="tool-header">
+      <h1>🔐 Base64 Encoder / Decoder</h1>
+      <p>Encode plain text to Base64 or decode Base64 strings back to text.</p>
+    </div>
+
+    <div class="tool-box">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="setTab('encode', this)">Encode</button>
+        <button class="tab-btn" onclick="setTab('decode', this)">Decode</button>
+      </div>
+
+      <div class="form-group">
+        <label id="input-label">Plain Text Input</label>
+        <textarea id="text-input" class="form-control" style="min-height:150px" placeholder="Enter text to encode…"></textarea>
+      </div>
+
+      <button class="btn-primary" onclick="process()" style="width:100%;justify-content:center;padding:12px">Convert</button>
+
+      <div class="output-box visible" style="margin-top:16px">
+        <div class="output-header">
+          <h3 id="output-label">Base64 Output</h3>
+          <div class="output-actions">
+            <button class="btn-copy" onclick="copyToClipboard(document.getElementById('result').textContent)">📋 Copy</button>
+          </div>
+        </div>
+        <div class="code-output" id="result" style="min-height:60px">// Result will appear here</div>
+      </div>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+
+  <script src="../../scripts/components.js"></script>
+  <script src="../../scripts/main.js"></script>
+  <script>
+    let mode = 'encode';
+    function setTab(m, btn) {
+      mode = m;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('input-label').textContent = m === 'encode' ? 'Plain Text Input' : 'Base64 Input';
+      document.getElementById('output-label').textContent = m === 'encode' ? 'Base64 Output' : 'Decoded Text';
+      document.getElementById('text-input').placeholder = m === 'encode' ? 'Enter text to encode…' : 'Enter Base64 to decode…';
+      document.getElementById('result').textContent = '// Result will appear here';
+    }
+
+    function process() {
+      const input = document.getElementById('text-input').value;
+      if (!input.trim()) { showToast('Please enter some text', 'error'); return; }
+      try {
+        if (mode === 'encode') {
+          document.getElementById('result').textContent = btoa(unescape(encodeURIComponent(input)));
+        } else {
+          document.getElementById('result').textContent = decodeURIComponent(escape(atob(input.trim())));
+        }
+        trackEvent('Developer Tools', mode, 'base64-encoder');
+      } catch (e) {
+        showToast('Invalid Base64 input', 'error');
+        document.getElementById('result').textContent = '// Error: ' + e.message;
+      }
+    }
+
+    document.getElementById('text-input').addEventListener('keydown', e => {
+      if (e.ctrlKey && e.key === 'Enter') process();
+    });
+  </script>
+</body>
+</html>

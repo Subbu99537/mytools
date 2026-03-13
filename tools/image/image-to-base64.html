@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image to Base64 Converter – MyTools</title>
+  <meta name="description" content="Convert any image to a Base64 encoded string for use in HTML, CSS, or JSON.">
+  <link rel="stylesheet" href="../../styles/main.css">
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+  <div class="tool-page">
+    <div class="breadcrumb"><a href="../../index.html">Home</a> › <a href="index.html">Image Tools</a> › <span>Image to Base64</span></div>
+    <div class="tool-header">
+      <h1>🔡 Image to Base64 Converter</h1>
+      <p>Convert any image into a Base64 encoded string for use in HTML, CSS, or APIs.</p>
+    </div>
+
+    <div class="tool-box">
+      <div class="upload-zone" id="drop-zone">
+        <input type="file" id="file-input" accept="image/*">
+        <div class="upload-icon">🔡</div>
+        <h3>Drop your image here</h3>
+        <p>Any image format supported</p>
+        <button type="button" class="btn-primary" style="margin-top:14px;padding:10px 24px" 
+          onclick="event.stopPropagation();document.getElementById('file-input').click()">
+          📂 Choose File
+        </button>
+      </div>
+        <h3>Drop your image here or click to browse</h3>
+        <p>Any image format supported</p>
+      </div>
+      <div style="text-align:center;margin-top:8px">
+        <button class="btn-secondary" onclick="document.getElementById('file-input').click()" style="font-size:0.85rem;padding:8px 20px">📂 Browse Files</button>
+      </div>
+
+      <div class="form-group" style="margin-top:20px">
+        <label>Output Format</label>
+        <div class="options-row">
+          <button class="option-btn active" data-out="dataurl" onclick="setOut(this)">Data URL (img src)</button>
+          <button class="option-btn" data-out="base64only" onclick="setOut(this)">Base64 Only</button>
+          <button class="option-btn" data-out="css" onclick="setOut(this)">CSS background</button>
+        </div>
+      </div>
+
+      <button class="btn-primary w-full" style="justify-content:center;padding:14px" onclick="convert()">🔡 Convert to Base64</button>
+    </div>
+
+    <div id="output" class="output-box">
+      <div class="output-header">
+        <h3>✅ Base64 Output</h3>
+        <div class="output-actions">
+          <button class="btn-copy" onclick="copyToClipboard(document.getElementById('b64-output').textContent)">📋 Copy</button>
+        </div>
+      </div>
+      <div id="b64-preview-wrap" style="margin-bottom:12px;display:none">
+        <img id="b64-preview" style="max-height:120px;border-radius:8px;border:1px solid var(--border)" alt="Preview">
+      </div>
+      <div class="code-output" id="b64-output"></div>
+      <p id="b64-info" style="font-size:0.78rem;color:var(--text-3);margin-top:8px;font-family:var(--font-mono)"></p>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+
+  <script src="../../scripts/components.js"></script>
+  <script src="../../scripts/main.js"></script>
+  <script>
+    let outMode = 'dataurl';
+    function setOut(btn) {
+      document.querySelectorAll('[data-out]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      outMode = btn.dataset.out;
+    }
+
+    initDropZone('drop-zone', files => { const dt = new DataTransfer(); if (files[0]) { dt.items.add(files[0]); document.getElementById('file-input').files = dt.files; } });
+
+    async function convert() {
+      const file = document.getElementById('file-input').files[0];
+      if (!file) { showToast('Please select an image', 'error'); return; }
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        const dataUrl = e.target.result;
+        let output;
+        if (outMode === 'dataurl') output = dataUrl;
+        else if (outMode === 'base64only') output = dataUrl.split(',')[1];
+        else output = `background-image: url("${dataUrl}");`;
+
+        document.getElementById('b64-output').textContent = output;
+        document.getElementById('b64-preview').src = dataUrl;
+        document.getElementById('b64-preview-wrap').style.display = 'block';
+        document.getElementById('b64-info').textContent = `${formatBytes(output.length)} string · ${file.type}`;
+        document.getElementById('output').classList.add('visible');
+        showToast('Converted to Base64!');
+        trackEvent('Image Tools', 'convert', 'image-to-base64');
+      };
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>
