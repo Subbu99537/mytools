@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Compressor – MyTools</title>
+  <meta name="description" content="Compress JPG, PNG and WEBP images online for free. Reduce file size while keeping quality.">
+  <link rel="stylesheet" href="../../styles/main.css">
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+  <div class="tool-page">
+    <div class="breadcrumb"><a href="../../index.html">Home</a> › <a href="index.html">Image Tools</a> › <span>Image Compressor</span></div>
+    <div class="tool-header">
+      <h1>🗜️ Image Compressor</h1>
+      <p>Reduce image file size while maintaining visual quality. Supports JPG, PNG, WEBP.</p>
+    </div>
+    <div class="ad-slot ad-slot-banner"><!-- Ad --></div>
+
+    <div class="tool-box" style="margin-top:24px">
+      <div class="upload-zone" id="drop-zone">
+        <input type="file" id="file-input" accept="image/*">
+        <div class="upload-icon">🖼️</div>
+        <h3>Drop an image here or click to browse</h3>
+        <p>Supports JPG, PNG, WEBP</p>
+      </div>
+
+      <div class="form-group" style="margin-top:20px">
+        <label>Quality: <strong id="quality-label">80%</strong></label>
+        <input type="range" id="quality" min="10" max="100" value="80" oninput="document.getElementById('quality-label').textContent=this.value+'%'">
+      </div>
+
+      <div class="form-group">
+        <label>Output Format</label>
+        <select id="output-format" class="form-control">
+          <option value="same">Same as input</option>
+          <option value="image/jpeg">JPEG</option>
+          <option value="image/png">PNG</option>
+          <option value="image/webp">WEBP</option>
+        </select>
+      </div>
+
+      <div id="progress-wrap" class="progress-wrap"><div class="progress-bar"></div></div>
+      <button class="btn-primary w-full" style="margin-top:16px;justify-content:center;padding:14px" onclick="compress()">🗜️ Compress Image</button>
+    </div>
+
+    <div id="output" class="output-box">
+      <div class="output-header">
+        <h3>✅ Compressed</h3>
+        <div class="output-actions">
+          <button class="btn-download" onclick="downloadResult()">⬇ Download</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
+        <div>
+          <p style="font-size:0.75rem;color:var(--text-3);margin-bottom:6px">ORIGINAL</p>
+          <img id="orig-preview" class="result-image" alt="Original">
+          <p id="orig-info" style="font-size:0.78rem;color:var(--text-3);margin-top:4px;font-family:var(--font-mono)"></p>
+        </div>
+        <div>
+          <p style="font-size:0.75rem;color:var(--text-3);margin-bottom:6px">COMPRESSED</p>
+          <img id="new-preview" class="result-image" alt="Compressed">
+          <p id="new-info" style="font-size:0.78rem;color:var(--green);margin-top:4px;font-family:var(--font-mono)"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+
+  <script src="../../scripts/components.js"></script>
+  <script src="../../scripts/main.js"></script>
+  <script>
+    let resultDataUrl = null, resultExt = 'jpg';
+
+    initDropZone('drop-zone', files => {
+      if (files[0]) { const dt = new DataTransfer(); dt.items.add(files[0]); document.getElementById('file-input').files = dt.files; }
+    });
+
+    async function compress() {
+      const file = document.getElementById('file-input').files[0];
+      if (!file) { showToast('Please select an image', 'error'); return; }
+
+      showProgress('progress-wrap');
+      setProgress('progress-wrap', 30);
+
+      const quality = parseInt(document.getElementById('quality').value) / 100;
+      let fmt = document.getElementById('output-format').value;
+      if (fmt === 'same') fmt = file.type || 'image/jpeg';
+      resultExt = fmt === 'image/png' ? 'png' : fmt === 'image/webp' ? 'webp' : 'jpg';
+
+      const origDataUrl = await readFileAsDataURL(file);
+      document.getElementById('orig-preview').src = origDataUrl;
+      document.getElementById('orig-info').textContent = `${formatBytes(file.size)} · ${file.type}`;
+
+      const img = await loadImage(origDataUrl);
+      setProgress('progress-wrap', 60);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      setProgress('progress-wrap', 90);
+
+      resultDataUrl = canvas.toDataURL(fmt, quality);
+      const newSize = Math.round((resultDataUrl.length - 22) * 3 / 4);
+
+      document.getElementById('new-preview').src = resultDataUrl;
+      document.getElementById('new-info').textContent = `~${formatBytes(newSize)} (${Math.round((1 - newSize/file.size)*100)}% smaller)`;
+      document.getElementById('output').classList.add('visible');
+      setProgress('progress-wrap', 100);
+      hideProgress('progress-wrap');
+      showToast('Image compressed!');
+      trackEvent('Image Tools', 'compress', 'image-compressor');
+    }
+
+    function downloadResult() { if (resultDataUrl) downloadDataURL(resultDataUrl, `compressed.${resultExt}`); }
+
+    function readFileAsDataURL(file) {
+      return new Promise((res, rej) => { const r = new FileReader(); r.onload = e => res(e.target.result); r.onerror = rej; r.readAsDataURL(file); });
+    }
+    function loadImage(src) {
+      return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+    }
+  </script>
+</body>
+</html>

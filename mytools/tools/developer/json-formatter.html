@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON Formatter & Validator – MyTools</title>
+  <meta name="description" content="Format, validate, minify and beautify JSON online for free.">
+  <link rel="stylesheet" href="../../styles/main.css">
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+  <div class="tool-page">
+    <div class="breadcrumb"><a href="../../index.html">Home</a> › <a href="index.html">Developer Tools</a> › <span>JSON Formatter</span></div>
+    <div class="tool-header">
+      <h1>{ } JSON Formatter</h1>
+      <p>Format, validate, minify, and explore JSON data with syntax highlighting.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="tool-box" style="margin:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <label style="font-size:0.85rem;font-weight:600">Input JSON</label>
+          <div style="display:flex;gap:6px">
+            <button class="btn-copy" onclick="loadSample()">Load Sample</button>
+            <button class="btn-copy" onclick="clearInput()">Clear</button>
+          </div>
+        </div>
+        <textarea id="json-input" class="form-control" style="min-height:400px;font-family:var(--font-mono);font-size:0.82rem" placeholder="Paste your JSON here…" oninput="autoFormat()"></textarea>
+        <div id="error-msg" style="margin-top:8px;padding:8px 12px;background:rgba(255,95,126,0.1);border-radius:6px;font-size:0.8rem;color:var(--pink);display:none"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn-primary" onclick="format()">✨ Format</button>
+          <button class="btn-secondary" onclick="minify()">⬇ Minify</button>
+          <button class="btn-secondary" onclick="sortKeys()">↕ Sort Keys</button>
+        </div>
+      </div>
+
+      <div class="tool-box" style="margin:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <label style="font-size:0.85rem;font-weight:600">Formatted Output</label>
+          <div style="display:flex;gap:6px">
+            <button class="btn-copy" onclick="copyOutput()">📋 Copy</button>
+            <button class="btn-copy" onclick="downloadJSON()">⬇ Download</button>
+          </div>
+        </div>
+        <div class="json-output" id="json-output" style="min-height:400px;font-size:0.82rem">// Formatted JSON will appear here</div>
+        <div id="json-stats" style="margin-top:8px;font-size:0.78rem;color:var(--text-3);font-family:var(--font-mono)"></div>
+      </div>
+    </div>
+
+    <div class="tool-box" style="margin-top:20px">
+      <h3 style="font-size:0.9rem;font-weight:600;margin-bottom:12px">JSON Tree Explorer</h3>
+      <div id="tree-view" style="font-family:var(--font-mono);font-size:0.82rem;max-height:400px;overflow:auto"></div>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+
+  <script src="../../scripts/components.js"></script>
+  <script src="../../scripts/main.js"></script>
+  <script>
+    let parsedJSON = null;
+
+    function autoFormat() {
+      clearTimeout(autoFormat._t);
+      autoFormat._t = setTimeout(() => {
+        const val = document.getElementById('json-input').value.trim();
+        if (val) format(false);
+      }, 800);
+    }
+
+    function format(showMsg = true) {
+      const input = document.getElementById('json-input').value.trim();
+      const errEl = document.getElementById('error-msg');
+
+      if (!input) return;
+      try {
+        parsedJSON = JSON.parse(input);
+        const formatted = JSON.stringify(parsedJSON, null, 2);
+        document.getElementById('json-output').innerHTML = syntaxHighlight(formatted);
+        errEl.style.display = 'none';
+        updateStats(parsedJSON, formatted);
+        renderTree(parsedJSON);
+        if (showMsg) showToast('JSON formatted!');
+        trackEvent('Developer Tools', 'format', 'json-formatter');
+      } catch (e) {
+        errEl.textContent = '❌ Invalid JSON: ' + e.message;
+        errEl.style.display = 'block';
+        document.getElementById('json-output').textContent = '// Invalid JSON';
+      }
+    }
+
+    function minify() {
+      const input = document.getElementById('json-input').value.trim();
+      try {
+        const minified = JSON.stringify(JSON.parse(input));
+        document.getElementById('json-output').textContent = minified;
+        document.getElementById('error-msg').style.display = 'none';
+        showToast('JSON minified!');
+      } catch (e) {
+        document.getElementById('error-msg').textContent = '❌ ' + e.message;
+        document.getElementById('error-msg').style.display = 'block';
+      }
+    }
+
+    function sortKeys() {
+      const input = document.getElementById('json-input').value.trim();
+      try {
+        parsedJSON = JSON.parse(input);
+        const sorted = sortObjKeys(parsedJSON);
+        const formatted = JSON.stringify(sorted, null, 2);
+        document.getElementById('json-output').innerHTML = syntaxHighlight(formatted);
+        document.getElementById('json-input').value = formatted;
+        showToast('Keys sorted!');
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    function sortObjKeys(obj) {
+      if (Array.isArray(obj)) return obj.map(sortObjKeys);
+      if (obj && typeof obj === 'object') {
+        return Object.keys(obj).sort().reduce((r, k) => { r[k] = sortObjKeys(obj[k]); return r; }, {});
+      }
+      return obj;
+    }
+
+    function syntaxHighlight(json) {
+      return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+        let cls = 'json-number';
+        if (/^"/.test(match)) cls = /:$/.test(match) ? 'json-key' : 'json-string';
+        else if (/true|false/.test(match)) cls = 'json-bool';
+        else if (/null/.test(match)) cls = 'json-null';
+        return `<span class="${cls}">${match}</span>`;
+      });
+    }
+
+    function updateStats(obj, str) {
+      const keys = countKeys(obj);
+      document.getElementById('json-stats').textContent =
+        `${formatBytes(str.length)} · ${keys} keys · depth: ${getDepth(obj)}`;
+    }
+
+    function countKeys(obj, count = 0) {
+      if (obj && typeof obj === 'object') {
+        const keys = Object.keys(obj);
+        count += keys.length;
+        keys.forEach(k => { count = countKeys(obj[k], count); });
+      }
+      return count;
+    }
+
+    function getDepth(obj, depth = 0) {
+      if (obj && typeof obj === 'object') {
+        return Math.max(...Object.values(obj).map(v => getDepth(v, depth + 1)), depth);
+      }
+      return depth;
+    }
+
+    function renderTree(obj, el = null, depth = 0) {
+      if (depth === 0) {
+        const container = document.getElementById('tree-view');
+        container.innerHTML = '';
+        el = container;
+      }
+      if (obj === null) { el.innerHTML += `<span class="json-null">null</span>`; return; }
+      if (typeof obj !== 'object') {
+        el.innerHTML += `<span class="${typeof obj === 'string' ? 'json-string' : typeof obj === 'boolean' ? 'json-bool' : 'json-number'}">${JSON.stringify(obj)}</span>`;
+        return;
+      }
+      const isArr = Array.isArray(obj);
+      const keys = Object.keys(obj);
+      keys.slice(0, 50).forEach(k => {
+        const row = document.createElement('div');
+        row.style.cssText = `padding-left:${depth * 16}px;line-height:1.8`;
+        const v = obj[k];
+        const isObj = v && typeof v === 'object';
+        row.innerHTML = `<span class="json-key">${isArr ? k : '"' + k + '"'}</span><span style="color:var(--text-3)">: </span>`;
+        el.appendChild(row);
+        if (isObj) renderTree(v, el, depth + 1);
+        else {
+          const span = document.createElement('span');
+          span.className = typeof v === 'string' ? 'json-string' : typeof v === 'boolean' ? 'json-bool' : v === null ? 'json-null' : 'json-number';
+          span.textContent = JSON.stringify(v);
+          row.appendChild(span);
+        }
+      });
+      if (keys.length > 50) {
+        const more = document.createElement('div');
+        more.style.cssText = `padding-left:${depth * 16}px;color:var(--text-3);font-size:0.78rem`;
+        more.textContent = `… and ${keys.length - 50} more`;
+        el.appendChild(more);
+      }
+    }
+
+    function copyOutput() {
+      const text = document.getElementById('json-output').textContent;
+      copyToClipboard(text);
+    }
+
+    function downloadJSON() {
+      if (!parsedJSON) return;
+      downloadBlob(new Blob([JSON.stringify(parsedJSON, null, 2)], { type: 'application/json' }), 'formatted.json');
+    }
+
+    function clearInput() {
+      document.getElementById('json-input').value = '';
+      document.getElementById('json-output').innerHTML = '// Formatted JSON will appear here';
+      document.getElementById('tree-view').innerHTML = '';
+      document.getElementById('json-stats').textContent = '';
+      document.getElementById('error-msg').style.display = 'none';
+    }
+
+    function loadSample() {
+      document.getElementById('json-input').value = JSON.stringify({
+        "name": "MyTools",
+        "version": "1.0.0",
+        "description": "Free online tools",
+        "tools": [{"id":1,"name":"JSON Formatter","category":"developer"},{"id":2,"name":"Password Generator","category":"developer"}],
+        "settings": {"theme":"dark","language":"en","notifications":true},
+        "created_at": "2025-01-01T00:00:00Z"
+      });
+      format();
+    }
+  </script>
+</body>
+</html>

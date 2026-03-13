@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Timer (Pomodoro) – MyTools</title>
+  <meta name="description" content="Free Pomodoro study timer to boost focus and productivity.">
+  <link rel="stylesheet" href="../../styles/main.css">
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+  <div class="tool-page" style="max-width:640px">
+    <div class="breadcrumb"><a href="../../index.html">Home</a> › <a href="index.html">Student Tools</a> › <span>Study Timer</span></div>
+    <div class="tool-header">
+      <h1>⏰ Study Timer</h1>
+      <p>Pomodoro-style focus timer. Work in focused bursts and take structured breaks.</p>
+    </div>
+
+    <div class="tool-box" style="text-align:center">
+      <!-- Mode selector -->
+      <div class="tabs" style="max-width:360px;margin:0 auto 24px">
+        <button class="tab-btn active" onclick="setMode('focus',this)">🎯 Focus</button>
+        <button class="tab-btn" onclick="setMode('short',this)">☕ Short Break</button>
+        <button class="tab-btn" onclick="setMode('long',this)">🛌 Long Break</button>
+      </div>
+
+      <div class="timer-mode" id="mode-label">Focus Session</div>
+
+      <!-- Ring -->
+      <div class="timer-ring" style="width:220px;height:220px;margin:20px auto">
+        <svg width="220" height="220">
+          <circle class="track" cx="110" cy="110" r="100"/>
+          <circle class="progress" id="ring-progress" cx="110" cy="110" r="100" stroke-dasharray="628" stroke-dashoffset="0"/>
+        </svg>
+        <div class="time-text" id="timer-display">25:00</div>
+      </div>
+
+      <!-- Session dots -->
+      <div id="session-dots" style="display:flex;justify-content:center;gap:8px;margin:16px 0">
+        <div class="dot active" style="width:10px;height:10px;border-radius:50%;background:var(--accent)"></div>
+        <div class="dot" style="width:10px;height:10px;border-radius:50%;background:var(--border-2)"></div>
+        <div class="dot" style="width:10px;height:10px;border-radius:50%;background:var(--border-2)"></div>
+        <div class="dot" style="width:10px;height:10px;border-radius:50%;background:var(--border-2)"></div>
+      </div>
+      <p style="font-size:0.78rem;color:var(--text-3)">Session <span id="session-num">1</span> of 4</p>
+
+      <!-- Controls -->
+      <div class="timer-controls" style="margin-top:24px">
+        <button class="btn-secondary" onclick="resetTimer()" style="width:44px;height:44px;padding:0;justify-content:center">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+        </button>
+        <button id="start-btn" class="btn-primary" style="padding:12px 36px;font-size:1rem" onclick="toggleTimer()">▶ Start</button>
+        <button class="btn-secondary" onclick="skipSession()" style="width:44px;height:44px;padding:0;justify-content:center" title="Skip">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="tool-box" style="margin-top:16px">
+      <h3 style="font-size:0.9rem;font-weight:600;margin-bottom:16px">⚙️ Timer Settings</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Focus (minutes)</label>
+          <input type="number" id="focus-mins" class="form-control" value="25" min="1" max="90" onchange="updateSettings()">
+        </div>
+        <div class="form-group">
+          <label>Short Break (minutes)</label>
+          <input type="number" id="short-mins" class="form-control" value="5" min="1" max="30" onchange="updateSettings()">
+        </div>
+        <div class="form-group">
+          <label>Long Break (minutes)</label>
+          <input type="number" id="long-mins" class="form-control" value="15" min="1" max="60" onchange="updateSettings()">
+        </div>
+      </div>
+      <label class="checkbox-group">
+        <input type="checkbox" id="auto-start" checked>
+        <label for="auto-start">Auto-start next session</label>
+      </label>
+    </div>
+
+    <!-- Stats -->
+    <div class="tool-box" style="margin-top:16px">
+      <h3 style="font-size:0.9rem;font-weight:600;margin-bottom:16px">📊 Today's Stats</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center">
+        <div>
+          <div id="stat-sessions" style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--accent)">0</div>
+          <div style="font-size:0.75rem;color:var(--text-3)">Sessions</div>
+        </div>
+        <div>
+          <div id="stat-focus" style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--green)">0m</div>
+          <div style="font-size:0.75rem;color:var(--text-3)">Focus Time</div>
+        </div>
+        <div>
+          <div id="stat-breaks" style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--orange)">0</div>
+          <div style="font-size:0.75rem;color:var(--text-3)">Breaks</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+
+  <script src="../../scripts/components.js"></script>
+  <script src="../../scripts/main.js"></script>
+  <script>
+    const MODES = { focus: 'Focus Session', short: 'Short Break', long: 'Long Break' };
+    let currentMode = 'focus';
+    let totalSecs = 25 * 60, remainSecs = 25 * 60;
+    let interval = null, running = false;
+    let sessionNum = 1, statsSessions = 0, statsFocusMins = 0, statsBreaks = 0;
+
+    function getMins() {
+      return {
+        focus: parseInt(document.getElementById('focus-mins').value) || 25,
+        short: parseInt(document.getElementById('short-mins').value) || 5,
+        long: parseInt(document.getElementById('long-mins').value) || 15
+      };
+    }
+
+    function updateSettings() { if (!running) { totalSecs = getMins()[currentMode] * 60; remainSecs = totalSecs; render(); } }
+
+    function setMode(mode, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMode = mode;
+      clearInterval(interval);
+      running = false;
+      document.getElementById('start-btn').textContent = '▶ Start';
+      totalSecs = getMins()[mode] * 60;
+      remainSecs = totalSecs;
+      document.getElementById('mode-label').textContent = MODES[mode];
+      render();
+    }
+
+    function toggleTimer() {
+      if (running) {
+        clearInterval(interval);
+        running = false;
+        document.getElementById('start-btn').textContent = '▶ Resume';
+      } else {
+        running = true;
+        document.getElementById('start-btn').textContent = '⏸ Pause';
+        interval = setInterval(tick, 1000);
+      }
+    }
+
+    function tick() {
+      remainSecs--;
+      if (remainSecs <= 0) {
+        clearInterval(interval);
+        running = false;
+        onSessionEnd();
+      }
+      render();
+    }
+
+    function onSessionEnd() {
+      if (currentMode === 'focus') {
+        statsSessions++;
+        statsFocusMins += getMins().focus;
+        document.getElementById('stat-sessions').textContent = statsessions = statsSessions;
+        document.getElementById('stat-focus').textContent = statsFocusMins + 'm';
+
+        // Advance session
+        if (sessionNum < 4) sessionNum++;
+        else { sessionNum = 1; }
+        updateDots();
+
+        // Notify
+        if (Notification.permission === 'granted') new Notification('🎉 Focus session complete! Time for a break.');
+        if (document.getElementById('auto-start').checked) {
+          setTimeout(() => { setModeAuto(sessionNum % 4 === 0 ? 'long' : 'short'); toggleTimer(); }, 1000);
+        } else {
+          showToast('Focus session complete! 🎉');
+        }
+      } else {
+        statsBreaks++;
+        document.getElementById('stat-breaks').textContent = statsBreaks;
+        if (document.getElementById('auto-start').checked) {
+          setTimeout(() => { setModeAuto('focus'); toggleTimer(); }, 1000);
+        } else {
+          showToast('Break over! Ready to focus? 💪');
+        }
+      }
+      document.getElementById('session-num').textContent = sessionNum;
+    }
+
+    function setModeAuto(mode) {
+      currentMode = mode;
+      const tabs = document.querySelectorAll('.tab-btn');
+      tabs.forEach(t => t.classList.remove('active'));
+      const idx = ['focus','short','long'].indexOf(mode);
+      if (tabs[idx]) tabs[idx].classList.add('active');
+      totalSecs = getMins()[mode] * 60;
+      remainSecs = totalSecs;
+      document.getElementById('mode-label').textContent = MODES[mode];
+      document.getElementById('start-btn').textContent = '▶ Start';
+      render();
+    }
+
+    function updateDots() {
+      document.querySelectorAll('.dot').forEach((d, i) => {
+        d.style.background = i < sessionNum ? 'var(--accent)' : 'var(--border-2)';
+      });
+    }
+
+    function resetTimer() {
+      clearInterval(interval);
+      running = false;
+      remainSecs = totalSecs;
+      document.getElementById('start-btn').textContent = '▶ Start';
+      render();
+    }
+
+    function skipSession() { remainSecs = 0; tick(); }
+
+    function render() {
+      const m = Math.floor(remainSecs / 60).toString().padStart(2, '0');
+      const s = (remainSecs % 60).toString().padStart(2, '0');
+      document.getElementById('timer-display').textContent = `${m}:${s}`;
+      document.title = `${m}:${s} – MyTools Timer`;
+
+      const circumference = 628;
+      const offset = circumference * (1 - remainSecs / totalSecs);
+      document.getElementById('ring-progress').style.strokeDashoffset = offset;
+    }
+
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+
+    render();
+  </script>
+</body>
+</html>

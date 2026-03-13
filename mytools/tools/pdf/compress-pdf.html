@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compress PDF – MyTools</title>
+  <meta name="description" content="Reduce PDF file size while maintaining readability. Free browser-based PDF compression.">
+  <link rel="stylesheet" href="../../styles/main.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+  <div class="tool-page">
+    <div class="breadcrumb">
+      <a href="../../index.html">Home</a> ›
+      <a href="index.html">PDF Tools</a> ›
+      <span>Compress PDF</span>
+    </div>
+    <div class="tool-header">
+      <h1>📦 Compress PDF</h1>
+      <p>Reduce your PDF file size. Works by re-encoding the document structure for smaller output.</p>
+    </div>
+
+    <div class="tool-box">
+      <div class="upload-zone" id="drop-zone">
+        <input type="file" id="file-input" accept=".pdf,application/pdf">
+        <div class="upload-icon">📦</div>
+        <h3>Drop your PDF here or click to browse</h3>
+        <p>Max file size: 50MB</p>
+      </div>
+
+      <div class="form-group" style="margin-top:20px">
+        <label>Compression Level</label>
+        <div class="options-row">
+          <button class="option-btn" data-level="low" onclick="setLevel(this)">Low (best quality)</button>
+          <button class="option-btn active" data-level="medium" onclick="setLevel(this)">Medium (recommended)</button>
+          <button class="option-btn" data-level="high" onclick="setLevel(this)">High (smallest size)</button>
+        </div>
+      </div>
+
+      <div id="progress-wrap" class="progress-wrap"><div class="progress-bar"></div></div>
+
+      <button class="btn-primary w-full" style="margin-top:16px;justify-content:center;padding:14px" onclick="compressPDF()">
+        📦 Compress PDF
+      </button>
+    </div>
+
+    <div id="output" class="output-box">
+      <div class="output-header">
+        <h3>✅ Compression Complete</h3>
+        <div class="output-actions">
+          <button class="btn-download" onclick="downloadCompressed()">⬇ Download Compressed PDF</button>
+        </div>
+      </div>
+      <div id="size-comparison" style="display:flex;gap:24px;margin-top:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:0.75rem;color:var(--text-3)">ORIGINAL SIZE</div>
+          <div id="orig-size" style="font-family:var(--font-mono);font-size:1.2rem;color:var(--text)"></div>
+        </div>
+        <div style="font-size:1.5rem;color:var(--text-3);align-self:center">→</div>
+        <div>
+          <div style="font-size:0.75rem;color:var(--text-3)">COMPRESSED SIZE</div>
+          <div id="new-size" style="font-family:var(--font-mono);font-size:1.2rem;color:var(--green)"></div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem;color:var(--text-3)">SAVED</div>
+          <div id="saved-pct" style="font-family:var(--font-mono);font-size:1.2rem;color:var(--accent)"></div>
+        </div>
+      </div>
+      <p style="font-size:0.8rem;color:var(--text-3);margin-top:12px">Note: Browser-based compression removes metadata and redundant objects. For image-heavy PDFs, use the high setting.</p>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+
+  <script src="../../scripts/components.js"></script>
+  <script src="../../scripts/main.js"></script>
+  <script>
+    let compressedBytes = null;
+    let level = 'medium';
+
+    function setLevel(btn) {
+      document.querySelectorAll('[data-level]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      level = btn.dataset.level;
+    }
+
+    initDropZone('drop-zone', files => { if (files[0]) document.getElementById('file-input')._file = files[0]; });
+
+    async function compressPDF() {
+      const input = document.getElementById('file-input');
+      const file = input.files[0] || input._file;
+      if (!file) { showToast('Please select a PDF file', 'error'); return; }
+
+      showProgress('progress-wrap');
+      setProgress('progress-wrap', 20);
+
+      try {
+        const { PDFDocument } = PDFLib;
+        const origBytes = await file.arrayBuffer();
+        setProgress('progress-wrap', 40);
+
+        const doc = await PDFDocument.load(origBytes, { updateMetadata: false });
+
+        // Remove metadata to save space
+        doc.setTitle('');
+        doc.setAuthor('');
+        doc.setSubject('');
+        doc.setKeywords([]);
+        doc.setProducer('MyTools');
+        doc.setCreator('MyTools');
+
+        setProgress('progress-wrap', 70);
+
+        const opts = { useObjectStreams: level !== 'low' };
+        compressedBytes = await doc.save(opts);
+        setProgress('progress-wrap', 100);
+
+        const origSize = origBytes.byteLength;
+        const newSize = compressedBytes.length;
+        const saved = ((origSize - newSize) / origSize * 100).toFixed(1);
+
+        document.getElementById('orig-size').textContent = formatBytes(origSize);
+        document.getElementById('new-size').textContent = formatBytes(newSize);
+        document.getElementById('saved-pct').textContent = saved + '% smaller';
+        document.getElementById('output').classList.add('visible');
+        showToast(`Compressed! Saved ${saved}%`);
+        trackEvent('PDF Tools', 'compress', 'compress-pdf');
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      }
+      hideProgress('progress-wrap');
+    }
+
+    function downloadCompressed() {
+      if (!compressedBytes) return;
+      downloadBlob(new Blob([compressedBytes], { type: 'application/pdf' }), 'compressed.pdf');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Resizer – MyTools</title>
+  <meta name="description" content="Resize images to exact pixel dimensions for free in your browser.">
+  <link rel="stylesheet" href="../../styles/main.css">
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+  <div class="tool-page">
+    <div class="breadcrumb"><a href="../../index.html">Home</a> › <a href="index.html">Image Tools</a> › <span>Image Resizer</span></div>
+    <div class="tool-header">
+      <h1>📐 Image Resizer</h1>
+      <p>Resize images to exact dimensions. Choose custom pixels or common presets.</p>
+    </div>
+
+    <div class="tool-box">
+      <div class="upload-zone" id="drop-zone">
+        <input type="file" id="file-input" accept="image/*">
+        <div class="upload-icon">📐</div>
+        <h3>Drop your image here or click to browse</h3>
+        <p>Supports JPG, PNG, WEBP, GIF</p>
+      </div>
+
+      <div id="orig-dims" style="font-size:0.8rem;color:var(--text-3);margin:10px 0;display:none"></div>
+
+      <div class="form-group" style="margin-top:16px">
+        <label>Quick Presets</label>
+        <div class="options-row">
+          <button class="option-btn" onclick="setPreset(1920,1080)">1920×1080</button>
+          <button class="option-btn" onclick="setPreset(1280,720)">1280×720</button>
+          <button class="option-btn" onclick="setPreset(800,600)">800×600</button>
+          <button class="option-btn" onclick="setPreset(400,400)">400×400</button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Width (px)</label>
+          <input type="number" id="width" class="form-control" placeholder="e.g. 800" oninput="syncDimension('w')">
+        </div>
+        <div class="form-group">
+          <label>Height (px)</label>
+          <input type="number" id="height" class="form-control" placeholder="e.g. 600" oninput="syncDimension('h')">
+        </div>
+      </div>
+
+      <div class="checkbox-group" style="margin-bottom:16px">
+        <input type="checkbox" id="lock-ratio" checked>
+        <label for="lock-ratio">Lock aspect ratio</label>
+      </div>
+
+      <button class="btn-primary w-full" style="justify-content:center;padding:14px" onclick="resizeImage()">📐 Resize Image</button>
+    </div>
+
+    <div id="output" class="output-box">
+      <div class="output-header">
+        <h3>✅ Resized Image</h3>
+        <div class="output-actions">
+          <button class="btn-download" onclick="downloadResult()">⬇ Download</button>
+        </div>
+      </div>
+      <img id="result-img" class="result-image" alt="Resized" style="max-height:400px;display:block;margin:0 auto">
+      <p id="result-info" style="font-size:0.8rem;color:var(--text-3);margin-top:8px;text-align:center;font-family:var(--font-mono)"></p>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+
+  <script src="../../scripts/components.js"></script>
+  <script src="../../scripts/main.js"></script>
+  <script>
+    let origImg = null, resultDataUrl = null, origW = 0, origH = 0;
+
+    initDropZone('drop-zone', files => loadImg(files[0]));
+    document.getElementById('file-input').addEventListener('change', e => loadImg(e.target.files[0]));
+
+    async function loadImg(file) {
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      origImg = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+      origW = origImg.naturalWidth; origH = origImg.naturalHeight;
+      document.getElementById('width').value = origW;
+      document.getElementById('height').value = origH;
+      const di = document.getElementById('orig-dims');
+      di.textContent = `Original: ${origW} × ${origH} px`;
+      di.style.display = 'block';
+    }
+
+    function syncDimension(changed) {
+      if (!document.getElementById('lock-ratio').checked || !origW) return;
+      const ratio = origW / origH;
+      if (changed === 'w') {
+        const w = parseInt(document.getElementById('width').value);
+        if (w) document.getElementById('height').value = Math.round(w / ratio);
+      } else {
+        const h = parseInt(document.getElementById('height').value);
+        if (h) document.getElementById('width').value = Math.round(h * ratio);
+      }
+    }
+
+    function setPreset(w, h) {
+      document.getElementById('width').value = w;
+      document.getElementById('height').value = h;
+    }
+
+    function resizeImage() {
+      if (!origImg) { showToast('Please select an image', 'error'); return; }
+      const w = parseInt(document.getElementById('width').value);
+      const h = parseInt(document.getElementById('height').value);
+      if (!w || !h || w < 1 || h < 1) { showToast('Enter valid dimensions', 'error'); return; }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(origImg, 0, 0, w, h);
+      resultDataUrl = canvas.toDataURL('image/png');
+
+      document.getElementById('result-img').src = resultDataUrl;
+      document.getElementById('result-info').textContent = `${w} × ${h} px`;
+      document.getElementById('output').classList.add('visible');
+      showToast('Image resized!');
+      trackEvent('Image Tools', 'resize', 'image-resizer');
+    }
+
+    function downloadResult() { if (resultDataUrl) downloadDataURL(resultDataUrl, 'resized.png'); }
+  </script>
+</body>
+</html>
