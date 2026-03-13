@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF to Image Converter – MyTools</title>
+  <meta name="description" content="Convert PDF pages to PNG or JPG images for free in your browser using PDF.js.">
+  <link rel="stylesheet" href="../../styles/main.css">
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+
+  <div class="tool-page">
+    <div class="breadcrumb">
+      <a href="../../index.html">Home</a> ›
+      <a href="index.html">PDF Tools</a> ›
+      <span>PDF to Image</span>
+    </div>
+    <div class="tool-header">
+      <h1>📸 PDF to Image Converter</h1>
+      <p>Upload a PDF and convert each page into a high-quality PNG or JPG image.</p>
+    </div>
+
+    <div class="ad-slot ad-slot-banner"><!-- Ad --></div>
+
+    <div class="tool-box" style="margin-top:24px">
+      <div class="upload-zone" id="drop-zone">
+        <input type="file" id="file-input" accept=".pdf,application/pdf">
+        <div class="upload-icon">📄</div>
+        <h3>Drop your PDF here or click to browse</h3>
+        <p>Supports PDF files up to 50MB</p>
+      </div>
+
+      <div class="form-row" style="margin-top:20px">
+        <div class="form-group">
+          <label>Output Format</label>
+          <select id="format" class="form-control">
+            <option value="image/png">PNG (lossless)</option>
+            <option value="image/jpeg">JPEG (smaller size)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Resolution (DPI)</label>
+          <select id="dpi" class="form-control">
+            <option value="1">72 DPI (screen)</option>
+            <option value="2" selected>144 DPI (recommended)</option>
+            <option value="3">216 DPI (high quality)</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="progress-wrap" class="progress-wrap"><div class="progress-bar"></div></div>
+
+      <button class="btn-primary w-full" style="margin-top:16px;justify-content:center;padding:14px" onclick="convertPDF()">
+        Convert to Images
+      </button>
+    </div>
+
+    <div id="output" class="output-box">
+      <div class="output-header">
+        <h3>✅ Pages Extracted</h3>
+        <div class="output-actions">
+          <button class="btn-download" onclick="downloadAll()">⬇ Download All as ZIP</button>
+        </div>
+      </div>
+      <div id="pages-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div id="footer-placeholder"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="../../scripts/components.js"></script>
+  <script src="../../scripts/main.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    let pages = [];
+
+    initDropZone('drop-zone', files => {
+      if (files[0]?.type === 'application/pdf' || files[0]?.name.endsWith('.pdf')) {
+        document.getElementById('file-input').files = createFileList(files[0]);
+      }
+    });
+
+    function createFileList(file) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      return dt.files;
+    }
+
+    async function convertPDF() {
+      const input = document.getElementById('file-input');
+      if (!input.files[0]) { showToast('Please select a PDF file', 'error'); return; }
+
+      showProgress('progress-wrap');
+      pages = [];
+      document.getElementById('pages-grid').innerHTML = '';
+
+      try {
+        const arrayBuffer = await input.files[0].arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const scale = parseFloat(document.getElementById('dpi').value);
+        const format = document.getElementById('format').value;
+        const ext = format === 'image/jpeg' ? 'jpg' : 'png';
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          setProgress('progress-wrap', (i / pdf.numPages) * 100);
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext('2d');
+          await page.render({ canvasContext: ctx, viewport }).promise;
+          const dataUrl = canvas.toDataURL(format, 0.92);
+          pages.push({ dataUrl, name: `page-${i}.${ext}` });
+
+          // Show preview
+          const wrapper = document.createElement('div');
+          wrapper.style.cssText = 'position:relative;cursor:pointer';
+          wrapper.innerHTML = `
+            <img src="${dataUrl}" style="width:100%;border-radius:8px;border:1px solid var(--border)" alt="Page ${i}">
+            <div style="text-align:center;font-size:0.75rem;color:var(--text-3);margin-top:4px">Page ${i}</div>
+            <button onclick="downloadPage(${i-1})" style="position:absolute;top:6px;right:6px;background:var(--accent);border:none;color:white;border-radius:6px;padding:4px 8px;font-size:0.7rem;cursor:pointer">⬇</button>
+          `;
+          document.getElementById('pages-grid').appendChild(wrapper);
+        }
+
+        document.getElementById('output').classList.add('visible');
+        showToast(`${pdf.numPages} pages converted!`);
+        trackEvent('PDF Tools', 'convert', 'pdf-to-image');
+      } catch (e) {
+        showToast('Error reading PDF: ' + e.message, 'error');
+      }
+      hideProgress('progress-wrap');
+    }
+
+    function downloadPage(i) { downloadDataURL(pages[i].dataUrl, pages[i].name); }
+
+    async function downloadAll() {
+      if (!pages.length) return;
+      const zip = new JSZip();
+      pages.forEach(p => {
+        const base64 = p.dataUrl.split(',')[1];
+        zip.file(p.name, base64, { base64: true });
+      });
+      const blob = await zip.generateAsync({ type: 'blob' });
+      downloadBlob(blob, 'pdf-pages.zip');
+    }
+  </script>
+</body>
+</html>

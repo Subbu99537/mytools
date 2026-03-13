@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UUID Generator – MyTools</title>
+  <meta name="description" content="Generate random UUID v4 values instantly for free.">
+  <link rel="stylesheet" href="../../styles/main.css">
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+  <div class="tool-page">
+    <div class="breadcrumb"><a href="../../index.html">Home</a> › <a href="index.html">Developer Tools</a> › <span>UUID Generator</span></div>
+    <div class="tool-header">
+      <h1>🎲 UUID Generator</h1>
+      <p>Generate random UUID v4 values for use in databases, APIs, and applications.</p>
+    </div>
+
+    <div class="tool-box">
+      <div class="form-row">
+        <div class="form-group">
+          <label>How many UUIDs?</label>
+          <select id="count" class="form-control">
+            <option value="1">1 UUID</option>
+            <option value="5">5 UUIDs</option>
+            <option value="10" selected>10 UUIDs</option>
+            <option value="25">25 UUIDs</option>
+            <option value="50">50 UUIDs</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Format</label>
+          <select id="fmt" class="form-control">
+            <option value="lower">Lowercase</option>
+            <option value="upper">UPPERCASE</option>
+            <option value="no-hyphens">No Hyphens</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-primary w-full" style="justify-content:center;padding:12px" onclick="generate()">🎲 Generate UUIDs</button>
+
+      <div id="output" class="output-box" style="margin-top:16px">
+        <div class="output-header">
+          <h3 id="uuid-count-label">UUIDs</h3>
+          <div class="output-actions">
+            <button class="btn-copy" onclick="copyAll()">📋 Copy All</button>
+          </div>
+        </div>
+        <div id="uuid-list" class="uuid-list"></div>
+      </div>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+
+  <script src="../../scripts/components.js"></script>
+  <script src="../../scripts/main.js"></script>
+  <script>
+    function generateUUID() {
+      if (crypto?.randomUUID) return crypto.randomUUID();
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+    }
+
+    function applyFormat(uuid) {
+      const fmt = document.getElementById('fmt').value;
+      if (fmt === 'upper') return uuid.toUpperCase();
+      if (fmt === 'no-hyphens') return uuid.replace(/-/g, '');
+      return uuid;
+    }
+
+    let uuids = [];
+
+    function generate() {
+      const count = parseInt(document.getElementById('count').value);
+      uuids = Array.from({ length: count }, () => applyFormat(generateUUID()));
+      document.getElementById('uuid-count-label').textContent = `${count} UUID${count > 1 ? 's' : ''}`;
+
+      document.getElementById('uuid-list').innerHTML = uuids.map((u, i) => `
+        <div class="uuid-item">
+          <span>${u}</span>
+          <button class="uuid-copy" onclick="copyToClipboard('${u}')" title="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      `).join('');
+
+      document.getElementById('output').classList.add('visible');
+      trackEvent('Developer Tools', 'generate', 'uuid-generator');
+    }
+
+    function copyAll() {
+      copyToClipboard(uuids.join('\n'));
+    }
+
+    // Generate on load
+    document.addEventListener('DOMContentLoaded', generate);
+  </script>
+</body>
+</html>

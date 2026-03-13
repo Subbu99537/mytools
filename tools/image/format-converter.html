@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Format Converter – MyTools</title>
+  <meta name="description" content="Convert images between JPG, PNG, WEBP, and GIF formats for free in your browser.">
+  <link rel="stylesheet" href="../../styles/main.css">
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+  <div class="tool-page">
+    <div class="breadcrumb"><a href="../../index.html">Home</a> › <a href="index.html">Image Tools</a> › <span>Format Converter</span></div>
+    <div class="tool-header">
+      <h1>🔄 Image Format Converter</h1>
+      <p>Convert images between JPG, PNG, WEBP, and other formats instantly.</p>
+    </div>
+
+    <div class="tool-box">
+      <div class="upload-zone" id="drop-zone">
+        <input type="file" id="file-input" accept="image/*" multiple>
+        <div class="upload-icon">🔄</div>
+        <h3>Drop images here or click to browse</h3>
+        <p>Multiple files supported · JPG, PNG, WEBP, GIF, BMP, TIFF</p>
+      </div>
+
+      <div class="form-group" style="margin-top:20px">
+        <label>Convert To</label>
+        <div class="options-row">
+          <button class="option-btn active" data-fmt="image/jpeg" onclick="setFmt(this)">JPEG</button>
+          <button class="option-btn" data-fmt="image/png" onclick="setFmt(this)">PNG</button>
+          <button class="option-btn" data-fmt="image/webp" onclick="setFmt(this)">WEBP</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Quality (for JPEG/WEBP): <strong id="quality-label">90%</strong></label>
+        <input type="range" id="quality" min="10" max="100" value="90" oninput="document.getElementById('quality-label').textContent=this.value+'%'">
+      </div>
+
+      <div id="file-list" class="file-list"></div>
+      <div id="progress-wrap" class="progress-wrap"><div class="progress-bar"></div></div>
+      <button class="btn-primary w-full" style="margin-top:16px;justify-content:center;padding:14px" onclick="convertAll()">🔄 Convert All</button>
+    </div>
+
+    <div id="output" class="output-box">
+      <div class="output-header">
+        <h3>✅ Converted Images</h3>
+        <div class="output-actions">
+          <button class="btn-download" onclick="downloadAllZip()">⬇ Download All (ZIP)</button>
+        </div>
+      </div>
+      <div id="results-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:12px"></div>
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="../../scripts/components.js"></script>
+  <script src="../../scripts/main.js"></script>
+  <script>
+    let files = [], results = [], targetFmt = 'image/jpeg';
+
+    function setFmt(btn) {
+      document.querySelectorAll('[data-fmt]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      targetFmt = btn.dataset.fmt;
+    }
+
+    initDropZone('drop-zone', nf => { files = [...files, ...nf.filter(f => f.type.startsWith('image/'))]; renderFileList(); });
+    document.getElementById('file-input').addEventListener('change', e => { files = [...files, ...Array.from(e.target.files)]; renderFileList(); });
+
+    function renderFileList() {
+      document.getElementById('file-list').innerHTML = files.map((f, i) => `
+        <div class="file-item">
+          <span>🖼️</span>
+          <span class="file-name">${f.name}</span>
+          <span class="file-size">${formatBytes(f.size)}</span>
+          <button class="file-remove" onclick="files.splice(${i},1);renderFileList()">✕</button>
+        </div>`).join('');
+    }
+
+    async function convertAll() {
+      if (!files.length) { showToast('Please add images', 'error'); return; }
+      showProgress('progress-wrap');
+      results = [];
+      document.getElementById('results-grid').innerHTML = '';
+
+      const ext = targetFmt === 'image/png' ? 'png' : targetFmt === 'image/webp' ? 'webp' : 'jpg';
+      const quality = parseInt(document.getElementById('quality').value) / 100;
+
+      for (let i = 0; i < files.length; i++) {
+        setProgress('progress-wrap', (i / files.length) * 100);
+        const url = await new Promise((res, rej) => { const r = new FileReader(); r.onload = e => res(e.target.result); r.onerror = rej; r.readAsDataURL(files[i]); });
+        const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = url; });
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        const dataUrl = canvas.toDataURL(targetFmt, quality);
+        const name = files[i].name.replace(/\.[^.]+$/, '') + '.' + ext;
+        results.push({ dataUrl, name });
+
+        const cell = document.createElement('div');
+        cell.style.cssText = 'text-align:center';
+        cell.innerHTML = `
+          <img src="${dataUrl}" style="width:100%;border-radius:6px;border:1px solid var(--border)">
+          <p style="font-size:0.72rem;color:var(--text-3);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</p>
+          <button onclick="downloadDataURL('${dataUrl}','${name}')" style="background:var(--accent);border:none;color:white;border-radius:6px;padding:4px 10px;font-size:0.72rem;cursor:pointer;margin-top:4px">⬇</button>
+        `;
+        document.getElementById('results-grid').appendChild(cell);
+      }
+
+      setProgress('progress-wrap', 100);
+      hideProgress('progress-wrap');
+      document.getElementById('output').classList.add('visible');
+      showToast(`${files.length} images converted!`);
+      trackEvent('Image Tools', 'convert', 'format-converter');
+    }
+
+    async function downloadAllZip() {
+      const zip = new JSZip();
+      results.forEach(r => { const b64 = r.dataUrl.split(',')[1]; zip.file(r.name, b64, { base64: true }); });
+      const blob = await zip.generateAsync({ type: 'blob' });
+      downloadBlob(blob, 'converted-images.zip');
+    }
+  </script>
+</body>
+</html>
